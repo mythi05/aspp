@@ -1,0 +1,6 @@
+@aspp_HostAddress = http://localhost:5191
+
+GET {{aspp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
