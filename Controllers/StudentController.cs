@@ -1,5 +1,5 @@
 ﻿using aspp.Data;
-using DormitoryAPI.Models;
+using aspp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

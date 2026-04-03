@@ -2,8 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DormitoryAPI.Models;
-
+namespace aspp.Models;
 public class Student
 {
     [Key]
