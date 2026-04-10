@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace aspp.Models // QUAN TRỌNG: Đổi TênProjectCuaBan thành tên project của bạn
+namespace aspp.Models 
 {
     // Enum trạng thái dịch vụ
     public enum TrangThaiDichVu
