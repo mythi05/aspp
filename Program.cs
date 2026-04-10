@@ -1,5 +1,6 @@
 ﻿using aspp.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,14 +8,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Services
+// Controllers
 builder.Services.AddControllers();
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Dormitory Management API",
+        Version = "v1",
+        Description = "Sinh viên thực hiện: Đỗ Thị Mỹ Thi - 2123110490\n\n" + 
+        "API quản lý ký túc xá"
+
+    });
+});
 
 var app = builder.Build();
 
-
+// Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -23,7 +36,6 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-// optional: tránh 404 trang chủ
 app.MapGet("/", () => "API is running...");
 
 app.Run();
