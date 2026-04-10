@@ -2,75 +2,54 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace aspp.Models // NHỚ ĐỔI TÊN PROJECT
+namespace aspp.Models
 {
-    // Enum Mức độ
-    public enum MucDoBaoTri
+    // Priority Level
+    public enum MaintenanceLevel
     {
-        [Display(Name = "Thấp")]
-        Thap = 1,
-
-        [Display(Name = "Trung bình")]
-        TrungBinh = 2,
-
-        [Display(Name = "Cao")]
-        Cao = 3,
-
-        [Display(Name = "Khẩn cấp")]
-        KhanCap = 4
+        Low = 1,
+        Medium = 2,
+        High = 3,
+        Critical = 4
     }
 
-    // Enum Trạng thái
-    public enum TrangThaiBaoTri
+    // Status
+    public enum MaintenanceStatus
     {
-        [Display(Name = "Chờ xử lý")]
-        ChoXuLy = 1,
-
-        [Display(Name = "Đang xử lý")]
-        DangXuLy = 2,
-
-        [Display(Name = "Hoàn thành")]
-        HoanThanh = 3
+        Pending = 1,
+        Processing = 2,
+        Completed = 3
     }
 
-    [Table("BaoTriSuaChua")]
+    [Table("Maintenances")]
     public class Maintenance
     {
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập phòng")]
+        [Required]
         [StringLength(20)]
-        [Display(Name = "Phòng")]
-        public string? Phong { get; set; }
+        public string Room { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập người báo cáo")]
+        [Required]
         [StringLength(100)]
-        [Display(Name = "Người báo cáo")]
-        public string? NguoiBaoCao { get; set; }
+        public string Reporter { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập loại")]
+        [Required]
         [StringLength(50)]
-        [Display(Name = "Loại")]
-        public string? Loai { get; set; } // Ví dụ: Điện, Nước, Nội thất...
+        public string Category { get; set; } = string.Empty; // Electricity, Water, Furniture...
 
-        [Required(ErrorMessage = "Vui lòng nhập mô tả")]
+        [Required]
         [StringLength(500)]
-        [Display(Name = "Mô tả")]
-        public string? MoTa { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         [Required]
-        [Display(Name = "Mức độ")]
-        public MucDoBaoTri MucDo { get; set; }
+        public MaintenanceLevel Level { get; set; }
 
         [Required]
-        [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:d/M/yyyy}", ApplyFormatInEditMode = true)]
-        [Display(Name = "Ngày báo cáo")]
-        public DateTime NgayBaoCao { get; set; }
+        public DateTime ReportDate { get; set; } = DateTime.Now;
 
         [Required]
-        [Display(Name = "Trạng thái")]
-        public TrangThaiBaoTri TrangThai { get; set; }
+        public MaintenanceStatus Status { get; set; } = MaintenanceStatus.Pending;
     }
 }

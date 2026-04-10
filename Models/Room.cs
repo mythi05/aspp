@@ -28,6 +28,7 @@ public class Room
 
     public int MaxCapacity { get; set; } // Sức chứa tối đa (VD: 4)
 
+    public int DangO { get; set; } = 0;
     public decimal Price { get; set; } // Giá phòng (VD: 750000)
 
     [Required]

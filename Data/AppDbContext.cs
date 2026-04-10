@@ -1,5 +1,6 @@
 ﻿using aspp.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace aspp.Data
 {
@@ -19,10 +20,13 @@ namespace aspp.Data
         public DbSet<Department> Departments { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Contract> Contracts { get; set; }
-        public DbSet<ThietBi> ThietBis { get; set; }
-        public DbSet<Service> DangKyDichVus { get; set; }
-        public DbSet<Maintenance> BaoTriSuaChuas { get; set; }
-        public DbSet<rule> ViPhams { get; set; }
+
+        public DbSet<Device> Devices { get; set; }
+        public DbSet<DeviceCondition> DeviceConditions { get; set; }
+        public DbSet<Maintenance> Maintenances { get; set; }
+        public DbSet<Service> Services { get; set; }
+        public DbSet<Violation> Violations { get; set; }
+
         // ===== CONFIG RELATION =====
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,4 +47,4 @@ namespace aspp.Data
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
-}
+}   

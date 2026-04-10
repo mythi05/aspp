@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔥 LUÔN bật Swagger (không dùng if)
+
 app.UseSwagger();
 app.UseSwaggerUI();
 

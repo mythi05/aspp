@@ -17,81 +17,77 @@ namespace aspp.Controllers
         }
 
         // ================= GET ALL =================
-        // GET: api/thietbi
+        // GET: api/device
         [HttpGet]
-        public async Task<IActionResult> GetAll(string? keyword, string? phong, TinhTrangThietBi? tinhTrang)
+        public async Task<IActionResult> GetAll(string? keyword, string? room, DeviceCondition? condition)
         {
-            var query = _context.ThietBis.AsQueryable();
+            var query = _context.Devices.AsQueryable();
 
-            // 🔍 search theo tên
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(x => x.TenThietBi.Contains(keyword));
+                query = query.Where(x => x.DeviceName.Contains(keyword));
             }
 
-            // 📍 filter phòng
-            if (!string.IsNullOrEmpty(phong))
+            if (!string.IsNullOrEmpty(room))
             {
-                query = query.Where(x => x.Phong == phong);
+                query = query.Where(x => x.Room == room);
             }
 
-            // 📊 filter tình trạng
-            if (tinhTrang.HasValue)
+            // ✅ FIX ĐÚNG Ở ĐÂY
+            if (condition != null)
             {
-                query = query.Where(x => x.TinhTrang == tinhTrang);
+                query = query.Where(x => x.Condition == condition);
             }
 
-            var result = await query.ToListAsync();
-            return Ok(result);
+            return Ok(await query.ToListAsync());
         }
 
         // ================= GET BY ID =================
-        // GET: api/thietbi/5
+        // GET: api/device/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var data = await _context.ThietBis.FindAsync(id);
+            var data = await _context.Devices.FindAsync(id);
 
             if (data == null)
-                return NotFound("Không tìm thấy thiết bị");
+                return NotFound("Device not found");
 
             return Ok(data);
         }
 
         // ================= CREATE =================
-        // POST: api/thietbi
+        // POST: api/device
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ThietBi model)
+        public async Task<IActionResult> Create([FromBody] Device model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            _context.ThietBis.Add(model);
+            _context.Devices.Add(model);
             await _context.SaveChangesAsync();
 
             return Ok(model);
         }
 
         // ================= UPDATE =================
-        // PUT: api/thietbi/5
+        // PUT: api/device/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ThietBi model)
+        public async Task<IActionResult> Update(int id, [FromBody] Device model)
         {
             if (id != model.Id)
-                return BadRequest("Id không khớp");
+                return BadRequest("Id mismatch");
 
-            var existing = await _context.ThietBis.FindAsync(id);
+            var existing = await _context.Devices.FindAsync(id);
             if (existing == null)
-                return NotFound("Không tìm thấy thiết bị");
+                return NotFound("Device not found");
 
-            // update field
-            existing.TenThietBi = model.TenThietBi;
-            existing.Phong = model.Phong;
-            existing.Loai = model.Loai;
-            existing.SoLuong = model.SoLuong;
-            existing.TinhTrang = model.TinhTrang;
-            existing.NgayMua = model.NgayMua;
-            existing.GiaTri = model.GiaTri;
+            existing.DeviceName = model.DeviceName;
+            existing.Room = model.Room;
+            existing.Type = model.Type;
+            existing.Quantity = model.Quantity;
+            existing.Condition = model.Condition;
+            existing.PurchaseDate = model.PurchaseDate;
+            existing.Value = model.Value;
 
             await _context.SaveChangesAsync();
 
@@ -99,19 +95,19 @@ namespace aspp.Controllers
         }
 
         // ================= DELETE =================
-        // DELETE: api/thietbi/5
+        // DELETE: api/device/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var data = await _context.ThietBis.FindAsync(id);
+            var data = await _context.Devices.FindAsync(id);
 
             if (data == null)
-                return NotFound("Không tìm thấy thiết bị");
+                return NotFound("Device not found");
 
-            _context.ThietBis.Remove(data);
+            _context.Devices.Remove(data);
             await _context.SaveChangesAsync();
 
-            return Ok("Xóa thành công");
+            return Ok("Deleted successfully");
         }
     }
 }

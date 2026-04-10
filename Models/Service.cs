@@ -2,65 +2,65 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace aspp.Models 
+namespace aspp.Models
 {
-    // Enum trạng thái dịch vụ
-    public enum TrangThaiDichVu
+    // Service status enum
+    public enum ServiceStatus
     {
-        [Display(Name = "Đang sử dụng")]
-        DangSuDung = 1,
+        [Display(Name = "In Use")]
+        Active = 1,
 
-        [Display(Name = "Hết hạn")]
-        HetHan = 2,
+        [Display(Name = "Expired")]
+        Expired = 2,
 
-        [Display(Name = "Đã hủy")]
-        DaHuy = 3
+        [Display(Name = "Cancelled")]
+        Cancelled = 3
     }
 
-    [Table("DangKyDichVu")]
+    [Table("ServiceRegistrations")]
     public class Service
     {
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập MSSV")]
+        [Required(ErrorMessage = "Student ID is required")]
         [StringLength(20)]
-        [Display(Name = "MSSV")]
-        public string? MSSV { get; set; }
+        [Display(Name = "Student ID")]
+        public string? StudentId { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập tên sinh viên")]
+        [Required(ErrorMessage = "Student name is required")]
         [StringLength(100)]
-        [Display(Name = "Sinh viên")]
-        public string? SinhVien { get; set; }
+        [Display(Name = "Student Name")]
+        public string? StudentName { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập phòng")]
+        [Required(ErrorMessage = "Room is required")]
         [StringLength(20)]
-        [Display(Name = "Phòng")]
-        public string? Phong { get; set; }
+        [Display(Name = "Room")]
+        public string? Room { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng chọn dịch vụ")]
+        [Required(ErrorMessage = "Service name is required")]
         [StringLength(100)]
-        [Display(Name = "Dịch vụ")]
-        public string? DichVu { get; set; } // Ví dụ: Internet, Giặt ủi...
+        [Display(Name = "Service Name")]
+        public string? ServiceName { get; set; } // Internet, Laundry,...
 
         [Column(TypeName = "decimal(18,0)")]
-        [Display(Name = "Giá")]
-        public decimal Gia { get; set; }
+        [Display(Name = "Price")]
+        public decimal Price { get; set; }
 
         [Required]
         [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:d/M/yyyy}", ApplyFormatInEditMode = true)]
-        [Display(Name = "Ngày bắt đầu")]
-        public DateTime NgayBatDau { get; set; }
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        [Display(Name = "Start Date")]
+        public DateTime StartDate { get; set; }
 
         [Required]
         [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:d/M/yyyy}", ApplyFormatInEditMode = true)]
-        [Display(Name = "Ngày kết thúc")]
-        public DateTime NgayKetThuc { get; set; }
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        [Display(Name = "End Date")]
+        public DateTime EndDate { get; set; }
 
         [Required]
-        [Display(Name = "Trạng thái")]
-        public TrangThaiDichVu TrangThai { get; set; }
+        [Display(Name = "Status")]
+        public ServiceStatus Status { get; set; }
     }
 }

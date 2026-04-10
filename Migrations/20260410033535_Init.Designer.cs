@@ -12,8 +12,8 @@ using aspp.Data;
 namespace aspp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260403015337_vipham")]
-    partial class vipham
+    [Migration("20260410033535_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -87,48 +87,6 @@ namespace aspp.Migrations
                     b.ToTable("Staffs");
                 });
 
-            modelBuilder.Entity("aspp.Models.BaoTriSuaChua", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Loai")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("MoTa")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("MucDo")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("NgayBaoCao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("NguoiBaoCao")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Phong")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("TrangThai")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BaoTriSuaChua");
-                });
-
             modelBuilder.Entity("aspp.Models.Contract", b =>
                 {
                     b.Property<int>("Id")
@@ -171,51 +129,6 @@ namespace aspp.Migrations
                     b.ToTable("Contracts");
                 });
 
-            modelBuilder.Entity("aspp.Models.DangKyDichVu", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DichVu")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<decimal>("Gia")
-                        .HasColumnType("decimal(18,0)");
-
-                    b.Property<string>("MSSV")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("NgayBatDau")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("NgayKetThuc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Phong")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("SinhVien")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("TrangThai")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DangKyDichVu");
-                });
-
             modelBuilder.Entity("aspp.Models.Department", b =>
                 {
                     b.Property<int>("Id")
@@ -234,6 +147,66 @@ namespace aspp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("aspp.Models.Device", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ConditionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeviceName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("PurchaseDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConditionId");
+
+                    b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("aspp.Models.DeviceCondition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeviceConditions");
                 });
 
             modelBuilder.Entity("aspp.Models.Invoice", b =>
@@ -282,6 +255,48 @@ namespace aspp.Migrations
                     b.ToTable("Invoices");
                 });
 
+            modelBuilder.Entity("aspp.Models.Maintenance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReportDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reporter")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Maintenances");
+                });
+
             modelBuilder.Entity("aspp.Models.Room", b =>
                 {
                     b.Property<int>("Id")
@@ -296,6 +311,9 @@ namespace aspp.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("CurrentOccupancy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DangO")
                         .HasColumnType("int");
 
                     b.Property<string>("Floor")
@@ -369,6 +387,51 @@ namespace aspp.Migrations
                     b.ToTable("RoomTransactions");
                 });
 
+            modelBuilder.Entity("aspp.Models.Service", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ServiceName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServiceRegistrations");
+                });
+
             modelBuilder.Entity("aspp.Models.Student", b =>
                 {
                     b.Property<int>("Id")
@@ -421,7 +484,7 @@ namespace aspp.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("aspp.Models.ThietBi", b =>
+            modelBuilder.Entity("aspp.Models.Violation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -429,81 +492,41 @@ namespace aspp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("GiaTri")
+                    b.Property<decimal>("Fine")
                         .HasColumnType("decimal(18,0)");
 
-                    b.Property<string>("Loai")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("NgayMua")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Phong")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("SoLuong")
+                    b.Property<int>("Level")
                         .HasColumnType("int");
 
-                    b.Property<string>("TenThietBi")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("TinhTrang")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ThietBi");
-                });
-
-            modelBuilder.Entity("aspp.Models.ViPham", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("LoaiViPham")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("MSSV")
+                    b.Property<string>("Room")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("MucDo")
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("NgayViPham")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Phong")
+                    b.Property<string>("StudentId")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("SinhVien")
+                    b.Property<string>("StudentName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<decimal>("TienPhat")
-                        .HasColumnType("decimal(18,0)");
+                    b.Property<DateTime>("ViolationDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("TrangThai")
-                        .HasColumnType("int");
+                    b.Property<string>("ViolationType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ViPham");
+                    b.ToTable("Violations");
                 });
 
             modelBuilder.Entity("Staff", b =>
@@ -542,6 +565,17 @@ namespace aspp.Migrations
                     b.Navigation("Room");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("aspp.Models.Device", b =>
+                {
+                    b.HasOne("aspp.Models.DeviceCondition", "Condition")
+                        .WithMany()
+                        .HasForeignKey("ConditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Condition");
                 });
 
             modelBuilder.Entity("aspp.Models.Invoice", b =>
