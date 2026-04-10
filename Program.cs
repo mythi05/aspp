@@ -17,10 +17,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Dormitory Management API",
+        Title = "DoThiMyThi_2123110490",
         Version = "v1",
-        Description = "Sinh viên thực hiện: Đỗ Thị Mỹ Thi - 2123110490\n\n" + 
-        "API quản lý ký túc xá"
+        Description = "API quản lý ký túc xá"
 
     });
 });
