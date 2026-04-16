@@ -16,100 +16,89 @@ namespace aspp.Controllers
             _context = context;
         }
 
-        // =========================
-        // GET: api/room
-        // Lấy tất cả phòng
-        // =========================
+        // ================= GET =================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
         {
-            return Ok(await _context.Rooms.ToListAsync());
+            var rooms = await _context.Rooms.ToListAsync();
+
+            foreach (var r in rooms)
+            {
+                r.Status = r.CurrentOccupancy >= r.MaxCapacity
+                    ? "Đã đầy"
+                    : "Còn trống";
+            }
+
+            return Ok(rooms);
         }
 
-        // =========================
-        // GET: api/room/{id}
-        // =========================
+        // ================= GET BY ID =================
         [HttpGet("{id}")]
         public async Task<ActionResult<Room>> GetRoom(int id)
         {
             var room = await _context.Rooms.FindAsync(id);
 
             if (room == null)
-                return NotFound("Không tìm thấy phòng");
+                return NotFound();
+
+            room.Status = room.CurrentOccupancy >= room.MaxCapacity
+                ? "Đã đầy"
+                : "Còn trống";
 
             return Ok(room);
         }
 
-        // =========================
-        // POST: api/room
-        // Thêm phòng
-        // =========================
+        // ================= CREATE =================
         [HttpPost]
         public async Task<ActionResult<Room>> CreateRoom(Room room)
         {
-            // Check trùng tên phòng
             if (await _context.Rooms.AnyAsync(r => r.RoomName == room.RoomName))
-            {
                 return BadRequest("Phòng đã tồn tại");
-            }
 
-            // Set trạng thái ban đầu
             room.CurrentOccupancy = 0;
             room.Status = "Còn trống";
 
             _context.Rooms.Add(room);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
+            return Ok(room);
         }
 
-        // =========================
-        // PUT: api/room/{id}
-        // Cập nhật phòng
-        // =========================
+        // ================= UPDATE =================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRoom(int id, Room room)
         {
             if (id != room.Id)
-                return BadRequest("ID không khớp");
+                return BadRequest();
 
-            var existingRoom = await _context.Rooms.FindAsync(id);
-            if (existingRoom == null)
-                return NotFound("Không tìm thấy phòng");
+            var existing = await _context.Rooms.FindAsync(id);
+            if (existing == null)
+                return NotFound();
 
-            // Update dữ liệu
-            existingRoom.RoomName = room.RoomName;
-            existingRoom.Building = room.Building;
-            existingRoom.Floor = room.Floor;
-            existingRoom.RoomType = room.RoomType;
-            existingRoom.MaxCapacity = room.MaxCapacity;
-            existingRoom.Price = room.Price;
+            existing.RoomName = room.RoomName;
+            existing.Building = room.Building;
+            existing.Floor = room.Floor;
+            existing.RoomType = room.RoomType;
+            existing.MaxCapacity = room.MaxCapacity;
+            existing.Price = room.Price;
 
-            // Update trạng thái theo số người
-            if (existingRoom.CurrentOccupancy >= existingRoom.MaxCapacity)
-            {
-                existingRoom.Status = "Đã đầy";
-            }
-            else
-            {
-                existingRoom.Status = "Còn trống";
-            }
+            existing.Status = existing.CurrentOccupancy >= existing.MaxCapacity
+                ? "Đã đầy"
+                : "Còn trống";
 
             await _context.SaveChangesAsync();
 
             return Ok("Cập nhật thành công");
         }
 
-        // =========================
-        // DELETE: api/room/{id}
-        // =========================
+        // ================= DELETE =================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
             var room = await _context.Rooms.FindAsync(id);
 
             if (room == null)
-                return NotFound("Không tìm thấy phòng");
+                return NotFound();
 
             _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
