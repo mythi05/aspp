@@ -17,9 +17,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReact",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // React
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(
+                    "http://localhost:5173",
+                    "https://frontend-aspp.vercel.app"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         });
 });
 
@@ -44,7 +47,7 @@ app.UseSwaggerUI();
 // Middleware
 app.UseHttpsRedirection();
 
-// 🔥 BẬT CORS (PHẢI ĐẶT TRƯỚC MapControllers)
+// 🔥 BẬT CORS (PHẢI TRƯỚC MapControllers)
 app.UseCors("AllowReact");
 
 app.MapControllers();
