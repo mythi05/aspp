@@ -11,6 +11,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Controllers
 builder.Services.AddControllers();
 
+// 🔥 ADD CORS (QUAN TRỌNG)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // React
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -20,7 +32,6 @@ builder.Services.AddSwaggerGen(c =>
         Title = "DoThiMyThi_2123110490",
         Version = "v1",
         Description = "API quản lý ký túc xá"
-
     });
 });
 
@@ -32,6 +43,9 @@ app.UseSwaggerUI();
 
 // Middleware
 app.UseHttpsRedirection();
+
+// 🔥 BẬT CORS (PHẢI ĐẶT TRƯỚC MapControllers)
+app.UseCors("AllowReact");
 
 app.MapControllers();
 
