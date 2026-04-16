@@ -50,22 +50,25 @@ namespace aspp.Controllers
 
             student.Status = student.Status ?? "active";
 
+            // 🔥 nếu đã rời → không cho có phòng
+            if (student.Status == "inactive")
+            {
+                student.RoomId = null;
+            }
+
+            // 🔥 nếu đang ở → check phòng có tồn tại + không full
             if (student.Status == "active" && student.RoomId != null)
             {
+                var count = await _context.Students
+                    .CountAsync(s => s.RoomId == student.RoomId && s.Status == "active");
+
                 var room = await _context.Rooms.FindAsync(student.RoomId);
 
                 if (room == null)
                     return BadRequest("Phòng không tồn tại");
 
-                if (room.CurrentOccupancy >= room.MaxCapacity)
+                if (count >= room.MaxCapacity)
                     return BadRequest("Phòng đã đầy");
-
-                room.CurrentOccupancy += 1;
-            }
-
-            if (student.Status == "inactive")
-            {
-                student.RoomId = null;
             }
 
             _context.Students.Add(student);
@@ -81,53 +84,42 @@ namespace aspp.Controllers
             if (id != student.Id)
                 return BadRequest("ID không khớp");
 
-            var existing = await _context.Students
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == id);
+            var existing = await _context.Students.FindAsync(id);
 
             if (existing == null)
                 return NotFound("Không tìm thấy sinh viên");
 
-            // 🔥 CASE 1: ĐÃ RỜI → reset phòng ngay
+            // 🔥 nếu chuyển sang đã rời → bỏ phòng
             if (student.Status == "inactive")
             {
-                if (existing.RoomId != null)
-                {
-                    var room = await _context.Rooms.FindAsync(existing.RoomId);
-                    if (room != null && room.CurrentOccupancy > 0)
-                        room.CurrentOccupancy -= 1;
-                }
-
                 student.RoomId = null;
             }
-            else
+
+            // 🔥 nếu đang ở → check phòng
+            if (student.Status == "active" && student.RoomId != null)
             {
-                // 🔥 CASE 2: đổi phòng
-                if (existing.RoomId != student.RoomId)
-                {
-                    if (existing.RoomId != null)
-                    {
-                        var oldRoom = await _context.Rooms.FindAsync(existing.RoomId);
-                        if (oldRoom != null && oldRoom.CurrentOccupancy > 0)
-                            oldRoom.CurrentOccupancy -= 1;
-                    }
+                var count = await _context.Students
+                    .CountAsync(s => s.RoomId == student.RoomId && s.Status == "active" && s.Id != id);
 
-                    if (student.RoomId != null)
-                    {
-                        var newRoom = await _context.Rooms.FindAsync(student.RoomId);
+                var room = await _context.Rooms.FindAsync(student.RoomId);
 
-                        if (newRoom == null)
-                            return BadRequest("Phòng không tồn tại");
+                if (room == null)
+                    return BadRequest("Phòng không tồn tại");
 
-                        if (newRoom.CurrentOccupancy >= newRoom.MaxCapacity)
-                            return BadRequest("Phòng đã đầy");
-
-                        newRoom.CurrentOccupancy += 1;
-                    }
-                }
+                if (count >= room.MaxCapacity)
+                    return BadRequest("Phòng đã đầy");
             }
 
-            _context.Entry(student).State = EntityState.Modified;
+            // update dữ liệu
+            existing.StudentCode = student.StudentCode;
+            existing.FullName = student.FullName;
+            existing.Email = student.Email;
+            existing.Gender = student.Gender;
+            existing.PhoneNumber = student.PhoneNumber;
+            existing.Major = student.Major;
+            existing.Status = student.Status;
+            existing.RoomId = student.RoomId;
+
             await _context.SaveChangesAsync();
 
             return Ok("Cập nhật thành công");
@@ -141,13 +133,6 @@ namespace aspp.Controllers
 
             if (student == null)
                 return NotFound("Không tìm thấy sinh viên");
-
-            if (student.RoomId != null)
-            {
-                var room = await _context.Rooms.FindAsync(student.RoomId);
-                if (room != null && room.CurrentOccupancy > 0)
-                    room.CurrentOccupancy -= 1;
-            }
 
             _context.Students.Remove(student);
             await _context.SaveChangesAsync();
