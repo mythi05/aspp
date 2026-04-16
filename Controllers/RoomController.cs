@@ -18,47 +18,59 @@ namespace aspp.Controllers
 
         // ================= GET =================
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        public async Task<ActionResult<IEnumerable<object>>> GetRooms()
         {
             var rooms = await _context.Rooms.ToListAsync();
 
+            var result = new List<object>();
+
             foreach (var r in rooms)
             {
-                // 🔥 TÍNH LẠI SỐ NGƯỜI (CHỈ ACTIVE)
-                r.CurrentOccupancy = await _context.Students
+                // 🔥 CHỈ ĐẾM SINH VIÊN ĐANG Ở
+                var occupancy = await _context.Students
                     .CountAsync(s => s.RoomId == r.Id && s.Status == "active");
 
-                // 🔥 UPDATE STATUS
-                r.Status = r.CurrentOccupancy >= r.MaxCapacity
-                    ? "Đã đầy"
-                    : "Còn trống";
+                result.Add(new
+                {
+                    r.Id,
+                    r.RoomName,
+                    r.Building,
+                    r.Floor,
+                    r.RoomType,
+                    r.MaxCapacity,
+                    r.Price,
+                    CurrentOccupancy = occupancy,
+                    Status = occupancy >= r.MaxCapacity ? "Đã đầy" : "Còn trống"
+                });
             }
 
-            await _context.SaveChangesAsync();
-
-            return Ok(rooms);
+            return Ok(result);
         }
 
         // ================= GET BY ID =================
         [HttpGet("{id}")]
-        public async Task<ActionResult<Room>> GetRoom(int id)
+        public async Task<ActionResult<object>> GetRoom(int id)
         {
             var room = await _context.Rooms.FindAsync(id);
 
             if (room == null)
                 return NotFound("Không tìm thấy phòng");
 
-            // 🔥 TÍNH LẠI
-            room.CurrentOccupancy = await _context.Students
-                .CountAsync(s => s.RoomId == room.Id && s.Status == "active");
+            var occupancy = await _context.Students
+                .CountAsync(s => s.RoomId == id && s.Status == "active");
 
-            room.Status = room.CurrentOccupancy >= room.MaxCapacity
-                ? "Đã đầy"
-                : "Còn trống";
-
-            await _context.SaveChangesAsync();
-
-            return Ok(room);
+            return Ok(new
+            {
+                room.Id,
+                room.RoomName,
+                room.Building,
+                room.Floor,
+                room.RoomType,
+                room.MaxCapacity,
+                room.Price,
+                CurrentOccupancy = occupancy,
+                Status = occupancy >= room.MaxCapacity ? "Đã đầy" : "Còn trống"
+            });
         }
 
         // ================= CREATE =================
@@ -95,14 +107,6 @@ namespace aspp.Controllers
             existing.MaxCapacity = room.MaxCapacity;
             existing.Price = room.Price;
 
-            // 🔥 TÍNH LẠI OCCUPANCY
-            existing.CurrentOccupancy = await _context.Students
-                .CountAsync(s => s.RoomId == id && s.Status == "active");
-
-            existing.Status = existing.CurrentOccupancy >= existing.MaxCapacity
-                ? "Đã đầy"
-                : "Còn trống";
-
             await _context.SaveChangesAsync();
 
             return Ok("Cập nhật thành công");
@@ -117,12 +121,12 @@ namespace aspp.Controllers
             if (room == null)
                 return NotFound("Không tìm thấy phòng");
 
-            // ❗ CHECK: nếu còn sinh viên đang ở thì không cho xóa
+            // ❗ KHÔNG CHO XÓA NẾU CÒN NGƯỜI ĐANG Ở
             var hasStudents = await _context.Students
                 .AnyAsync(s => s.RoomId == id && s.Status == "active");
 
             if (hasStudents)
-                return BadRequest("Phòng vẫn còn sinh viên, không thể xóa");
+                return BadRequest("Phòng vẫn còn sinh viên đang ở");
 
             _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
