@@ -17,7 +17,6 @@ namespace aspp.Controllers
         }
 
         // ================= GET ALL =================
-        // GET: api/staff
         [HttpGet]
         public async Task<IActionResult> GetAll(string? keyword, int? departmentId, int? status)
         {
@@ -26,7 +25,6 @@ namespace aspp.Controllers
                 .Include(s => s.Role)
                 .AsQueryable();
 
-            // 🔍 Search
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(s =>
@@ -35,43 +33,67 @@ namespace aspp.Controllers
                     s.Phone.Contains(keyword));
             }
 
-            // 📂 Filter phòng ban
             if (departmentId.HasValue)
             {
                 query = query.Where(s => s.DepartmentId == departmentId);
             }
 
-            // 📊 Filter trạng thái
             if (status.HasValue)
             {
                 query = query.Where(s => s.Status == status);
             }
 
-            var result = await query.ToListAsync();
+            var result = await query
+                .Select(s => new
+                {
+                    s.Id,
+                    s.StaffCode,
+                    s.FullName,
+                    s.Phone,
+                    s.Email,
+                    s.HireDate,
+                    s.Status,
+                    s.DepartmentId,
+                    DepartmentName = s.Department!.Name,
+                    s.RoleId,
+                    RoleName = s.Role!.Name
+                })
+                .ToListAsync();
+
             return Ok(result);
         }
 
         // ================= GET BY ID =================
-        // GET: api/staff/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var staff = await _context.Staffs
-                .Include(s => s.Department)
-                .Include(s => s.Role)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            var s = await _context.Staffs
+                .Include(x => x.Department)
+                .Include(x => x.Role)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (staff == null) return NotFound();
+            if (s == null) return NotFound();
 
-            return Ok(staff);
+            return Ok(new
+            {
+                s.Id,
+                s.StaffCode,
+                s.FullName,
+                s.Phone,
+                s.Email,
+                s.HireDate,
+                s.Status,
+                s.DepartmentId,
+                DepartmentName = s.Department!.Name,
+                s.RoleId,
+                RoleName = s.Role!.Name
+            });
         }
 
         // ================= CREATE =================
-        // POST: api/staff
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Staff staff)
         {
-            // 🔥 Auto generate mã NV
             var count = await _context.Staffs.CountAsync();
             staff.StaffCode = "NV" + (count + 1).ToString("D3");
 
@@ -82,7 +104,6 @@ namespace aspp.Controllers
         }
 
         // ================= UPDATE =================
-        // PUT: api/staff/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Staff staff)
         {
@@ -107,7 +128,6 @@ namespace aspp.Controllers
         }
 
         // ================= DELETE =================
-        // DELETE: api/staff/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
