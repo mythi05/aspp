@@ -16,7 +16,6 @@ namespace aspp.Controllers
             _context = context;
         }
 
-        // ================= GET ALL =================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
@@ -27,7 +26,6 @@ namespace aspp.Controllers
             return Ok(students);
         }
 
-        // ================= GET BY ID =================
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> GetStudent(int id)
         {
@@ -41,7 +39,6 @@ namespace aspp.Controllers
             return Ok(student);
         }
 
-        // ================= CREATE =================
         [HttpPost]
         public async Task<ActionResult<Student>> CreateStudent(Student student)
         {
@@ -50,13 +47,11 @@ namespace aspp.Controllers
 
             student.Status = student.Status ?? "active";
 
-            // 🔥 nếu đã rời → không cho có phòng
             if (student.Status == "inactive")
             {
                 student.RoomId = null;
             }
 
-            // 🔥 nếu đang ở → check phòng có tồn tại + không full
             if (student.Status == "active" && student.RoomId != null)
             {
                 var count = await _context.Students
@@ -77,7 +72,6 @@ namespace aspp.Controllers
             return Ok(student);
         }
 
-        // ================= UPDATE =================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudent(int id, Student student)
         {
@@ -89,13 +83,11 @@ namespace aspp.Controllers
             if (existing == null)
                 return NotFound("Không tìm thấy sinh viên");
 
-            // 🔥 nếu chuyển sang đã rời → bỏ phòng
             if (student.Status == "inactive")
             {
                 student.RoomId = null;
             }
 
-            // 🔥 nếu đang ở → check phòng
             if (student.Status == "active" && student.RoomId != null)
             {
                 var count = await _context.Students
@@ -110,7 +102,6 @@ namespace aspp.Controllers
                     return BadRequest("Phòng đã đầy");
             }
 
-            // update dữ liệu
             existing.StudentCode = student.StudentCode;
             existing.FullName = student.FullName;
             existing.Email = student.Email;
@@ -125,7 +116,6 @@ namespace aspp.Controllers
             return Ok("Cập nhật thành công");
         }
 
-        // ================= DELETE =================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
