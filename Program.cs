@@ -11,16 +11,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Controllers
 builder.Services.AddControllers();
 
-// 🔥 ADD CORS (QUAN TRỌNG)
+// 🔥 FIX CORS TRIỆT ĐỂ (quan trọng)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact",
         policy =>
         {
-            policy.WithOrigins(
-                    "http://localhost:5173",
-                    "https://frontend-aspp.vercel.app"
-                )
+            policy
+                .SetIsOriginAllowed(_ => true) // 🔥 cho phép mọi origin (fix preflight)
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
@@ -47,11 +45,13 @@ app.UseSwaggerUI();
 // Middleware
 app.UseHttpsRedirection();
 
-// 🔥 BẬT CORS (PHẢI TRƯỚC MapControllers)
+// 🔥 CORS PHẢI ĐẶT Ở ĐÂY
 app.UseCors("AllowReact");
 
+// Routing
 app.MapControllers();
 
+// Test root
 app.MapGet("/", () => "API is running...");
 
 app.Run();
