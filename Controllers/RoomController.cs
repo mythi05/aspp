@@ -16,21 +16,25 @@ namespace aspp.Controllers
             _context = context;
         }
 
-        // ================= GET =================
+        // ================= GET ALL =================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetRooms()
         {
             var rooms = await _context.Rooms.ToListAsync();
 
-            var result = new List<object>();
+            // 🔥 đếm 1 lần (tránh N+1 query)
+            var studentCounts = await _context.Students
+                .Where(s => s.Status == "active")
+                .GroupBy(s => s.RoomId)
+                .Select(g => new { RoomId = g.Key, Count = g.Count() })
+                .ToListAsync();
 
-            foreach (var r in rooms)
+            var result = rooms.Select(r =>
             {
-                // 🔥 CHỈ ĐẾM SINH VIÊN ĐANG Ở
-                var occupancy = await _context.Students
-                    .CountAsync(s => s.RoomId == r.Id && s.Status == "active");
+                var occupancy = studentCounts
+                    .FirstOrDefault(x => x.RoomId == r.Id)?.Count ?? 0;
 
-                result.Add(new
+                return new
                 {
                     r.Id,
                     r.RoomName,
@@ -41,8 +45,8 @@ namespace aspp.Controllers
                     r.Price,
                     CurrentOccupancy = occupancy,
                     Status = occupancy >= r.MaxCapacity ? "Đã đầy" : "Còn trống"
-                });
-            }
+                };
+            });
 
             return Ok(result);
         }
@@ -79,9 +83,6 @@ namespace aspp.Controllers
         {
             if (await _context.Rooms.AnyAsync(r => r.RoomName == room.RoomName))
                 return BadRequest("Phòng đã tồn tại");
-
-            room.CurrentOccupancy = 0;
-            room.Status = "Còn trống";
 
             _context.Rooms.Add(room);
             await _context.SaveChangesAsync();
@@ -121,7 +122,6 @@ namespace aspp.Controllers
             if (room == null)
                 return NotFound("Không tìm thấy phòng");
 
-            // ❗ KHÔNG CHO XÓA NẾU CÒN NGƯỜI ĐANG Ở
             var hasStudents = await _context.Students
                 .AnyAsync(s => s.RoomId == id && s.Status == "active");
 

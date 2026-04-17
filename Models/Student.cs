@@ -1,8 +1,8 @@
-﻿using aspp.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspp.Models;
+
 public class Student
 {
     [Key]
@@ -10,28 +10,30 @@ public class Student
 
     [Required]
     [StringLength(20)]
-    public string StudentCode { get; set; } = string.Empty; // MSSV (VD: SV001)
+    public string StudentCode { get; set; } = string.Empty;
 
     [Required]
     [StringLength(100)]
-    public string FullName { get; set; } = string.Empty; // Họ và tên[EmailAddress]
+    public string FullName { get; set; } = string.Empty;
+
+    [EmailAddress]
     [StringLength(100)]
-    public string? Email { get; set; } // Email (VD: nguyenvana@email.com)
+    public string? Email { get; set; }
 
     [StringLength(10)]
-    public string Gender { get; set; } = string.Empty; // Giới tính (Nam/Nữ)
+    public string Gender { get; set; } = string.Empty;
 
     [StringLength(15)]
-    public string PhoneNumber { get; set; } = string.Empty; // Số điện thoại
+    public string PhoneNumber { get; set; } = string.Empty;
 
     [StringLength(100)]
-    public string Major { get; set; } = string.Empty; // Ngành học (VD: Công nghệ thông tin)
+    public string Major { get; set; } = string.Empty;
 
+    // 🔥 FIX: thống nhất active / inactive
     [StringLength(50)]
-    public string Status { get; set; } = "Đang ở"; // Trạng thái (VD: Đang ở, Đã rời đi)
+    public string Status { get; set; } = "active";
 
-    // --- THIẾT LẬP KHÓA NGOẠI (RELATIONSHIP) ---
-    // Liên kết sinh viên này với bảng Room (Phòng)
+    // FK
     public int? RoomId { get; set; }
 
     [ForeignKey("RoomId")]
