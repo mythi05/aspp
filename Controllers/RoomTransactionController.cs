@@ -16,9 +16,7 @@ namespace aspp.Controllers
             _context = context;
         }
 
-        // ==========================================================
-        // 1. GET ALL (lọc theo loại)
-        // ==========================================================
+        // ================= GET =================
         [HttpGet]
         public async Task<IActionResult> GetTransactions(string type = "Check-in")
         {
@@ -32,9 +30,7 @@ namespace aspp.Controllers
             return Ok(data);
         }
 
-        // ==========================================================
-        // 2. DASHBOARD
-        // ==========================================================
+        // ================= DASHBOARD =================
         [HttpGet("dashboard")]
         public async Task<IActionResult> Dashboard()
         {
@@ -56,9 +52,7 @@ namespace aspp.Controllers
             });
         }
 
-        // ==========================================================
-        // 3. CHECK-IN
-        // ==========================================================
+        // ================= CHECK-IN =================
         [HttpPost("checkin")]
         public async Task<IActionResult> CheckIn([FromBody] RoomTransaction transaction)
         {
@@ -69,17 +63,27 @@ namespace aspp.Controllers
                 transaction.TransactionType = "Check-in";
                 transaction.TransactionDate = DateTime.Now;
 
+                // 🔥 check phòng đầy
+                var count = await _context.Students
+                    .CountAsync(s => s.RoomId == transaction.RoomId && s.Status == "active");
+
+                var room = await _context.Rooms.FindAsync(transaction.RoomId);
+
+                if (room == null)
+                    return BadRequest("Phòng không tồn tại");
+
+                if (count >= room.MaxCapacity)
+                    return BadRequest("Phòng đã đầy");
+
                 _context.RoomTransactions.Add(transaction);
 
                 // update student
                 var student = await _context.Students.FindAsync(transaction.StudentId);
                 if (student != null)
+                {
                     student.RoomId = transaction.RoomId;
-
-                // update room
-                var room = await _context.Rooms.FindAsync(transaction.RoomId);
-                if (room != null)
-                    room.DangO++;
+                    student.Status = "active";
+                }
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
@@ -93,9 +97,7 @@ namespace aspp.Controllers
             }
         }
 
-        // ==========================================================
-        // 4. CHECK-OUT
-        // ==========================================================
+        // ================= CHECK-OUT =================
         [HttpPost("checkout/{studentId}")]
         public async Task<IActionResult> CheckOut(int studentId)
         {
@@ -122,11 +124,9 @@ namespace aspp.Controllers
 
                 _context.RoomTransactions.Add(transaction);
 
-                var room = await _context.Rooms.FindAsync(student.RoomId);
-                if (room != null)
-                    room.DangO--;
-
+                // 🔥 update student
                 student.RoomId = null;
+                student.Status = "inactive";
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
@@ -140,9 +140,7 @@ namespace aspp.Controllers
             }
         }
 
-        // ==========================================================
-        // 5. DELETE
-        // ==========================================================
+        // ================= DELETE =================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransaction(int id)
         {
