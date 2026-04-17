@@ -1,25 +1,57 @@
+﻿using aspp.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// DB
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// 🔥 FIX CORS TRIỆT ĐỂ (quan trọng)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact",
+        policy =>
+        {
+            policy
+                .SetIsOriginAllowed(_ => true) // 🔥 cho phép mọi origin (fix preflight)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "DoThiMyThi_2123110490",
+        Version = "v1",
+        Description = "API quản lý ký túc xá"
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger UI
+app.UseSwagger();
+app.UseSwaggerUI();
 
+// Middleware
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+// 🔥 CORS PHẢI ĐẶT Ở ĐÂY
+app.UseCors("AllowReact");
 
+// Routing
 app.MapControllers();
+
+// Test root
+app.MapGet("/", () => "API is running...");
 
 app.Run();
