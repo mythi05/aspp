@@ -1,11 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using aspp.Models; // 🔥 THÊM DÒNG NÀY
 
-public class Role
+namespace aspp.Models // 🔥 THÊM NAMESPACE
 {
-    public int Id { get; set; }
+    public class Role
+    {
+        public int Id { get; set; }
 
-    [Required]
-    public string Name { get; set; } = "";
+        [Required]
+        public string Name { get; set; } = "";
 
-    public ICollection<Staff>? Staffs { get; set; }
+        public ICollection<Staff>? Staffs { get; set; }
+    }
 }

@@ -1,31 +1,35 @@
-﻿
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace aspp.Models
+namespace aspp.Models;
+
+// Sử dụng Primary Constructor nếu lớp này có tham số khởi tạo, 
+// tuy nhiên với Model thường ta giữ nguyên để EF Core làm việc dễ dàng hơn.
+public class Contract
 {
-    public class Contract
-    {
-        public int Id { get; set; }
+    public int Id { get; set; }
 
-        [Required]
-        public string ContractCode { get; set; } = ""; // HD001
+    [Required]
+    [StringLength(50)]
+    public string ContractCode { get; set; } = string.Empty;
 
-        // ===== FK =====
-        public int StudentId { get; set; }
-        public Student? Student { get; set; }
+    public int StudentId { get; set; }
+    public Student? Student { get; set; }
 
-        public int RoomId { get; set; }
-        public Room? Room { get; set; }
+    public int RoomId { get; set; }
+    public Room? Room { get; set; }
 
-        // ===== DATA =====
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
 
-        public decimal MonthlyFee { get; set; }
-        public decimal Deposit { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal MonthlyFee { get; set; }
 
-        public int Status { get; set; } // 1: active, 0: expired
-    }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal Deposit { get; set; }
+    public DateTime? CheckInDate { get; set; }
+    public int Status { get; set; }
+
+    public string? InventoryStatus { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

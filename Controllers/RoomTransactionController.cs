@@ -10,148 +10,147 @@ namespace aspp.Controllers
     public class RoomTransactionApiController : ControllerBase
     {
         private readonly AppDbContext _context;
+        public RoomTransactionApiController(AppDbContext context) { _context = context; }
 
-        public RoomTransactionApiController(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        // ================= GET =================
+        // ==========================================================
+        // 1. LẤY LỊCH SỬ GIAO DỊCH
+        // ==========================================================
         [HttpGet]
-        public async Task<IActionResult> GetTransactions(string type = "Check-in")
+        public async Task<IActionResult> GetAll()
         {
             var data = await _context.RoomTransactions
                 .Include(t => t.Student)
                 .Include(t => t.Room)
-                .Where(t => t.TransactionType == type)
                 .OrderByDescending(t => t.TransactionDate)
-                .ToListAsync();
-
+                .Select(t => new
+                {
+                    t.Id,
+                    StudentCode = t.Student != null ? t.Student.StudentCode : "N/A",
+                    StudentName = t.Student != null ? t.Student.FullName : "N/A",
+                    RoomName = t.Room != null ? t.Room.RoomName : "N/A",
+                    t.TransactionType,
+                    t.TransactionDate,
+                    t.Note
+                }).ToListAsync();
             return Ok(data);
         }
 
-        // ================= DASHBOARD =================
-        [HttpGet("dashboard")]
-        public async Task<IActionResult> Dashboard()
+        // ==========================================================
+        // 2. KIỂM TRA HỢP ĐỒNG (QUAN TRỌNG ĐỂ ĐỒNG BỘ FRONTEND)
+        // ==========================================================
+        [HttpGet("validate/{studentCode}")]
+        public async Task<IActionResult> ValidateContract(string studentCode)
         {
-            var checkinToday = await _context.RoomTransactions
-                .CountAsync(t => t.TransactionType == "Check-in"
-                              && t.TransactionDate.Date == DateTime.Today);
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentCode == studentCode);
 
-            var checkoutToday = await _context.RoomTransactions
-                .CountAsync(t => t.TransactionType == "Check-out"
-                              && t.TransactionDate.Date == DateTime.Today);
+            if (student == null) return NotFound(new { message = "Không tìm thấy sinh viên." });
 
-            var total = await _context.RoomTransactions.CountAsync();
+            // Tìm hợp đồng đang có hiệu lực (Status = 1)
+            var activeContract = await _context.Contracts
+                .Include(c => c.Room)
+                .OrderByDescending(c => c.CreatedAt)
+                .FirstOrDefaultAsync(c => c.StudentId == student.Id && c.Status == 1);
+
+            if (activeContract == null)
+                return BadRequest(new { message = "Sinh viên chưa có hợp đồng hiệu lực hoặc đã thanh lý." });
 
             return Ok(new
             {
-                CheckinToday = checkinToday,
-                CheckoutToday = checkoutToday,
-                TotalTransactions = total
+                studentId = student.Id,
+                fullName = student.FullName,
+                roomId = activeContract.RoomId,
+                roomName = activeContract.Room?.RoomName,
+                contractCode = activeContract.ContractCode,
+                // Check xem SV đã check-in thực tế chưa
+                isCheckIn = student.Status == "active"
             });
         }
 
-        // ================= CHECK-IN =================
+        // ==========================================================
+        // 3. XỬ LÝ CHECK-IN (Dựa trên phòng của Hợp đồng)
+        // ==========================================================
+        // Trong RoomTransactionApiController.cs -> Method CheckIn
         [HttpPost("checkin")]
-        public async Task<IActionResult> CheckIn([FromBody] RoomTransaction transaction)
+        public async Task<IActionResult> CheckIn([FromBody] CheckInReq req)
         {
-            using var dbTransaction = await _context.Database.BeginTransactionAsync();
-
+            using var trans = await _context.Database.BeginTransactionAsync();
             try
             {
-                transaction.TransactionType = "Check-in";
-                transaction.TransactionDate = DateTime.Now;
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentCode == req.StudentCode);
+                if (student == null) return NotFound("Không tìm thấy sinh viên");
 
-                // 🔥 check phòng đầy
-                var count = await _context.Students
-                    .CountAsync(s => s.RoomId == transaction.RoomId && s.Status == "active");
+                var contract = await _context.Contracts.FirstOrDefaultAsync(c => c.StudentId == student.Id && c.Status == 1);
+                if (contract == null) return BadRequest("Không tìm thấy hợp đồng hiệu lực");
 
-                var room = await _context.Rooms.FindAsync(transaction.RoomId);
+                // --- BỔ SUNG DÒNG NÀY ---
+                contract.CheckInDate = DateTime.Now;
+                _context.Contracts.Update(contract);
 
-                if (room == null)
-                    return BadRequest("Phòng không tồn tại");
+                // Cập nhật trạng thái sinh viên
+                student.Status = "active";
+                student.RoomId = contract.RoomId;
+                _context.Students.Update(student);
 
-                if (count >= room.MaxCapacity)
-                    return BadRequest("Phòng đã đầy");
-
-                _context.RoomTransactions.Add(transaction);
-
-                // update student
-                var student = await _context.Students.FindAsync(transaction.StudentId);
-                if (student != null)
-                {
-                    student.RoomId = transaction.RoomId;
-                    student.Status = "active";
-                }
-
-                await _context.SaveChangesAsync();
-                await dbTransaction.CommitAsync();
-
-                return Ok(transaction);
-            }
-            catch (Exception ex)
-            {
-                await dbTransaction.RollbackAsync();
-                return BadRequest("Lỗi check-in: " + ex.Message);
-            }
-        }
-
-        // ================= CHECK-OUT =================
-        [HttpPost("checkout/{studentId}")]
-        public async Task<IActionResult> CheckOut(int studentId)
-        {
-            var student = await _context.Students
-                .Include(s => s.Room)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
-
-            if (student == null || student.RoomId == null)
-                return BadRequest("Sinh viên chưa có phòng");
-
-            using var dbTransaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                var transaction = new RoomTransaction
+                // Lưu log giao dịch
+                var log = new RoomTransaction
                 {
                     StudentId = student.Id,
-                    RoomId = student.RoomId.Value,
-                    TransactionType = "Check-out",
+                    RoomId = contract.RoomId,
+                    TransactionType = "Check-in",
                     TransactionDate = DateTime.Now,
-                    HandledBy = "Admin",
-                    Note = "Trả phòng"
+                    Note = req.Note ?? "Nhận phòng thực tế"
                 };
 
-                _context.RoomTransactions.Add(transaction);
-
-                // 🔥 update student
-                student.RoomId = null;
-                student.Status = "inactive";
-
+                _context.RoomTransactions.Add(log);
                 await _context.SaveChangesAsync();
-                await dbTransaction.CommitAsync();
+                await trans.CommitAsync();
 
-                return Ok(transaction);
+                return Ok(new { message = "Xác nhận nhận phòng thành công." });
             }
             catch (Exception ex)
             {
-                await dbTransaction.RollbackAsync();
-                return BadRequest("Lỗi check-out: " + ex.Message);
+                await trans.RollbackAsync();
+                return StatusCode(500, ex.Message);
             }
         }
 
-        // ================= DELETE =================
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(int id)
+        // ==========================================================
+        // 4. XỬ LÝ CHECK-OUT
+        // ==========================================================
+        [HttpPost("checkout/{studentCode}")]
+        public async Task<IActionResult> Checkout(string studentCode)
         {
-            var item = await _context.RoomTransactions.FindAsync(id);
-            if (item == null)
-                return NotFound();
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentCode == studentCode);
+            if (student == null) return NotFound("Không tìm thấy sinh viên");
 
-            _context.RoomTransactions.Remove(item);
+            // 1. Tìm hợp đồng đang hiệu lực
+            var contract = await _context.Contracts
+                .FirstOrDefaultAsync(c => c.StudentId == student.Id && c.Status == 1);
+
+            // 2. Cập nhật trạng thái sinh viên (Rời phòng thực tế)
+            student.Status = "Chưa xếp phòng"; // Frontend sẽ dựa vào cái này để hiện "Đã trả phòng thực tế"
+            student.RoomId = null;
+            _context.Students.Update(student);
+
+            // 3. Lưu log giao dịch
+            var transaction = new RoomTransaction
+            {
+                StudentId = student.Id,
+                RoomId = contract?.RoomId ?? 0,
+                TransactionType = "Check-out",
+                TransactionDate = DateTime.Now,
+                Note = "Sinh viên dọn ra khỏi phòng thực tế"
+            };
+            _context.RoomTransactions.Add(transaction);
+
             await _context.SaveChangesAsync();
-
-            return Ok("Deleted");
+            return Ok(new { message = "Trả phòng thực tế thành công" });
+        }
+        public class CheckInReq
+        {
+            public string StudentCode { get; set; } = "";
+            public string? Note { get; set; }
         }
     }
 }

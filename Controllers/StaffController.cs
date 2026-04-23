@@ -2,7 +2,6 @@
 using aspp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 namespace aspp.Controllers
 {
     [Route("api/[controller]")]
@@ -16,7 +15,6 @@ namespace aspp.Controllers
             _context = context;
         }
 
-        // ================= GET ALL =================
         [HttpGet]
         public async Task<IActionResult> GetAll(string? keyword, int? departmentId, int? status)
         {
@@ -27,55 +25,15 @@ namespace aspp.Controllers
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(s =>
-                    s.FullName.Contains(keyword) ||
-                    s.Email.Contains(keyword) ||
-                    s.Phone.Contains(keyword));
+                query = query.Where(s => s.FullName.Contains(keyword) ||
+                                       s.Email.Contains(keyword) ||
+                                       s.StaffCode.Contains(keyword));
             }
 
-            if (departmentId.HasValue)
-            {
-                query = query.Where(s => s.DepartmentId == departmentId);
-            }
+            if (departmentId.HasValue) query = query.Where(s => s.DepartmentId == departmentId);
+            if (status.HasValue) query = query.Where(s => s.Status == status);
 
-            if (status.HasValue)
-            {
-                query = query.Where(s => s.Status == status);
-            }
-
-            var result = await query
-                .Select(s => new
-                {
-                    s.Id,
-                    s.StaffCode,
-                    s.FullName,
-                    s.Phone,
-                    s.Email,
-                    s.HireDate,
-                    s.Status,
-                    s.DepartmentId,
-                    DepartmentName = s.Department!.Name,
-                    s.RoleId,
-                    RoleName = s.Role!.Name
-                })
-                .ToListAsync();
-
-            return Ok(result);
-        }
-
-        // ================= GET BY ID =================
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var s = await _context.Staffs
-                .Include(x => x.Department)
-                .Include(x => x.Role)
-                .FirstOrDefaultAsync(x => x.Id == id);
-
-            if (s == null) return NotFound();
-
-            return Ok(new
-            {
+            var result = await query.OrderByDescending(x => x.Id).Select(s => new {
                 s.Id,
                 s.StaffCode,
                 s.FullName,
@@ -84,35 +42,57 @@ namespace aspp.Controllers
                 s.HireDate,
                 s.Status,
                 s.DepartmentId,
-                DepartmentName = s.Department!.Name,
+                DepartmentName = s.Department != null ? s.Department.Name : "N/A",
                 s.RoleId,
-                RoleName = s.Role!.Name
-            });
+                RoleName = s.Role != null ? s.Role.Name : "N/A"
+            }).ToListAsync();
+
+            return Ok(result);
         }
 
-        // ================= CREATE =================
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Staff staff)
         {
-            var count = await _context.Staffs.CountAsync();
-            staff.StaffCode = "NV" + (count + 1).ToString("D3");
+            // ❗ Bỏ validate StaffCode (phòng trường hợp hệ thống vẫn check)
+            ModelState.Remove("StaffCode");
 
-            _context.Staffs.Add(staff);
-            await _context.SaveChangesAsync();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            return Ok(staff);
+            try
+            {
+                var last = await _context.Staffs
+                    .OrderByDescending(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                int nextId = (last?.Id ?? 0) + 1;
+
+                // ✅ Auto generate mã
+                staff.StaffCode = $"NV{nextId:D3}";
+
+                // ❗ tránh EF tạo mới quan hệ
+                staff.Department = null;
+                staff.Role = null;
+
+                _context.Staffs.Add(staff);
+                await _context.SaveChangesAsync();
+
+                return Ok(staff);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // ================= UPDATE =================
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Staff staff)
         {
-            if (id != staff.Id)
-                return BadRequest("Id không khớp");
+            if (id != staff.Id) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var existing = await _context.Staffs.FindAsync(id);
-            if (existing == null)
-                return NotFound();
+            if (existing == null) return NotFound();
 
             existing.FullName = staff.FullName;
             existing.Phone = staff.Phone;
@@ -123,22 +103,18 @@ namespace aspp.Controllers
             existing.RoleId = staff.RoleId;
 
             await _context.SaveChangesAsync();
-
             return Ok(existing);
         }
 
-        // ================= DELETE =================
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var staff = await _context.Staffs.FindAsync(id);
-            if (staff == null)
-                return NotFound();
+            if (staff == null) return NotFound();
 
             _context.Staffs.Remove(staff);
             await _context.SaveChangesAsync();
-
-            return Ok("Xóa thành công");
+            return Ok(new { message = "Xóa thành công" });
         }
     }
 }

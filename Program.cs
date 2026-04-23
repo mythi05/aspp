@@ -1,27 +1,34 @@
 ﻿using aspp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using OfficeOpenXml; // 🔥 thiếu cái này
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔥 EPPlus license
+
+ExcelPackage.License.SetNonCommercialPersonal("Thi Do");
 
 // DB
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
 
-// 🔥 FIX CORS TRIỆT ĐỂ (quan trọng)
+// 🔥 CORS (dev thì ok, production không nên để all)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReact",
-        policy =>
-        {
-            policy
-                .SetIsOriginAllowed(_ => true) // 🔥 cho phép mọi origin (fix preflight)
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowReact", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
 // Swagger
@@ -38,20 +45,18 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Swagger UI
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
 // Middleware
 app.UseHttpsRedirection();
 
-// 🔥 CORS PHẢI ĐẶT Ở ĐÂY
+// 🔥 CORS phải trước MapControllers
 app.UseCors("AllowReact");
 
-// Routing
 app.MapControllers();
 
-// Test root
 app.MapGet("/", () => "API is running...");
 
 app.Run();

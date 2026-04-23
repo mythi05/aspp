@@ -1,27 +1,42 @@
-﻿using aspp.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-public class Staff
+namespace aspp.Models
 {
-    public int Id { get; set; }
+    public class Staff
+    {
+        [Key]
+        public int Id { get; set; }
 
-    [Required]
-    public string StaffCode { get; set; } = "";
+        // ❗ Không cho client đụng vào
+        [BindNever]
+        public string? StaffCode { get; set; }
 
-    [Required]
-    public string FullName { get; set; } = "";
+        [Required(ErrorMessage = "Họ tên không được để trống")]
+        public string FullName { get; set; } = "";
 
-    public string Phone { get; set; } = "";
-    public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
+        [RegularExpression(@"^\d{10,11}$", ErrorMessage = "Số điện thoại chỉ được nhập số (10-11 số)")]
+        public string Phone { get; set; } = "";
 
-    public DateTime HireDate { get; set; }
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; } = "";
 
-    public int Status { get; set; } // 1: active
+        [Required]
+        public DateTime HireDate { get; set; }
 
-    // FK
-    public int DepartmentId { get; set; }
-    public Department? Department { get; set; }
+        public int Status { get; set; } = 1;
 
-    public int RoleId { get; set; }
-    public Role? Role { get; set; }
+        [Required]
+        public int DepartmentId { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public virtual Department? Department { get; set; }
+
+        [Required]
+        public int RoleId { get; set; }
+
+        public virtual Role? Role { get; set; }
+    }
 }

@@ -130,7 +130,18 @@ namespace aspp.Controllers
 
             return Ok(service);
         }
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] int newStatus)
+        {
+            var service = await _context.Services.FindAsync(id);
+            if (service == null) return NotFound();
 
+            // Sửa lỗi: Ép kiểu int sang Enum ServiceStatus
+            service.Status = (aspp.Models.ServiceStatus)newStatus;
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
         // ==========================================================
         // 6. DELETE
         // ==========================================================

@@ -89,7 +89,32 @@ namespace aspp.Controllers
 
             return Ok(room);
         }
+        [HttpGet("available-rooms")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAvailableRooms()
+        {
+            // 1. Lấy toàn bộ danh sách phòng
+            var rooms = await _context.Rooms.ToListAsync();
 
+            // 2. Đếm số sinh viên đang ở thực tế trong mỗi phòng
+            var studentCounts = await _context.Students
+                .Where(s => s.Status == "active")
+                .GroupBy(s => s.RoomId)
+                .Select(g => new { RoomId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // 3. Trả về thông tin phòng kèm số chỗ đã ngồi
+            var result = rooms.Select(r => new
+            {
+                r.Id,
+                r.RoomName,
+                r.MaxCapacity,
+                CurrentOccupancy = studentCounts.FirstOrDefault(x => x.RoomId == r.Id)?.Count ?? 0
+            })
+            .Where(r => r.CurrentOccupancy < r.MaxCapacity) // Chỉ hiện phòng còn chỗ
+            .ToList();
+
+            return Ok(result);
+        }
         // ================= UPDATE =================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRoom(int id, Room room)
@@ -112,7 +137,26 @@ namespace aspp.Controllers
 
             return Ok("Cập nhật thành công");
         }
+        [HttpGet("{id}/students")]
+        public async Task<ActionResult<IEnumerable<object>>> GetStudentsInRoom(int id)
+        {
+            // Kiểm tra phòng có tồn tại không
+            var roomExists = await _context.Rooms.AnyAsync(r => r.Id == id);
+            if (!roomExists) return NotFound("Không tìm thấy phòng");
 
+            var students = await _context.Students
+                .Where(s => s.RoomId == id && s.Status == "active")
+                .Select(s => new {
+                    s.Id,
+                    s.FullName,
+                    s.StudentCode,
+                    s.Gender,
+                    // Bỏ JoinDate nếu báo lỗi, hoặc thay đúng tên trường trong DB của bạn
+                })
+                .ToListAsync();
+
+            return Ok(students);
+        }
         // ================= DELETE =================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
@@ -120,18 +164,22 @@ namespace aspp.Controllers
             var room = await _context.Rooms.FindAsync(id);
 
             if (room == null)
-                return NotFound("Không tìm thấy phòng");
+                return NotFound("Không tìm thấy phòng này trên hệ thống.");
 
+            // Kiểm tra xem có sinh viên nào đang ở (Status = active) không
             var hasStudents = await _context.Students
                 .AnyAsync(s => s.RoomId == id && s.Status == "active");
 
             if (hasStudents)
-                return BadRequest("Phòng vẫn còn sinh viên đang ở");
+            {
+                // Trả về lỗi 400 nếu phòng không trống
+                return BadRequest("Không thể xóa! Phòng này đang có sinh viên cư trú.");
+            }
 
             _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
 
-            return Ok("Xóa thành công");
+            return Ok("Đã xóa phòng thành công.");
         }
     }
 }
